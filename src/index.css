@@ -1,0 +1,118 @@
+@import 'tailwindcss';
+@import 'leaflet/dist/leaflet.css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Sistema visual: cinzas azulados neutros para as superfícies e a cor da operadora só como destaque
+ * (botão principal, item ativo do menu, foco). Cor de verdade fica reservada para estados (verde, âmbar, vermelho).
+ * Sobrescrever a escala "gray" troca o tema do painel inteiro sem tocar nas classes das telas.
+ */
+@theme {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --color-gray-50: #f7f8fa;
+  --color-gray-100: #f0f2f5;
+  --color-gray-200: #e4e7ec;
+  --color-gray-300: #d0d5dd;
+  --color-gray-400: #98a2b3;
+  --color-gray-500: #667085;
+  --color-gray-600: #475467;
+  --color-gray-700: #2e3644;
+  --color-gray-800: #232936;
+  --color-gray-900: #131720;
+  --color-gray-950: #0b0e14;
+
+  /* Fundo da área de conteúdo no modo claro: um tom abaixo dos cards brancos, para separar as camadas. */
+  --color-canvas: #eceff3;
+
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.625rem;
+}
+
+@theme inline {
+  --color-brand: var(--brand);
+  --color-brand-fg: var(--brand-fg);
+}
+
+:root {
+  /* A tela de login e o tema leem estas variáveis; o tenant define as "-base" e "-dark" em tempo de execução. */
+  --brand-base: #1f3a5f;
+  --brand-base-fg: #ffffff;
+  --brand-dark: #8fb3e8;
+  --brand-dark-fg: #0b0e14;
+  --brand: var(--brand-base);
+  --brand-fg: var(--brand-base-fg);
+}
+/*
+ * Modo claro com mais contraste: bordas e texto secundário um tom mais escuros.
+ * Regras fora de @layer vencem o @theme; o .dark devolve os valores originais
+ * (vale para o painel escuro inteiro e para a sidebar, que é sempre escura).
+ */
+:root {
+  --color-gray-200: #dce0e6;
+  --color-gray-500: #596274;
+}
+.dark {
+  --color-gray-200: #e4e7ec;
+  --color-gray-500: #667085;
+  --brand: var(--brand-dark);
+  --brand-fg: var(--brand-dark-fg);
+  color-scheme: dark;
+}
+
+html {
+  font-feature-settings: 'cv11', 'ss01';
+}
+body {
+  @apply bg-canvas text-[14px] leading-5 text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100;
+}
+/* Números alinhados em colunas (valores, tabelas, indicadores). */
+.num,
+table td,
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--brand);
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-gray-300);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--color-gray-700);
+  background-clip: content-box;
+  border: 2px solid transparent;
+}
+
+.leaflet-container {
+  font: inherit;
+}
+.dark .leaflet-layer {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}
+.dark .leaflet-popup-content-wrapper,
+.dark .leaflet-popup-tip {
+  background: var(--color-gray-900);
+  color: var(--color-gray-100);
+}
+.pin {
+  border-radius: 9999px;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
