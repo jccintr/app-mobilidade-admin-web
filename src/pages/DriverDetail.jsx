@@ -5,6 +5,7 @@ import { api, errorText, fetchDocument } from '../lib/api.js';
 import { DOC_LABEL, DRIVER_STATUS, dateTime, vehicleText, VEHICLE } from '../lib/format.js';
 import { ArrowLeft, Ban, Check, LockOpen, Route, X } from 'lucide-react';
 import { Alert, Avatar, Button, Card, Field, Modal, Spinner, StatusBadge, Textarea } from '../components/ui.jsx';
+import DriverWallet from '../components/DriverWallet.jsx';
 
 function DocumentView({ driverId, type, info }) {
   const [doc, setDoc] = useState(null);
@@ -59,6 +60,7 @@ export default function DriverDetail() {
     mutationFn: ({ name, body }) => api.post(`/admin/drivers/${id}/${name}`, body),
     onSuccess: (result) => {
       queryClient.setQueryData(['driver', id], (old) => ({ ...old, driver: result.driver }));
+      queryClient.invalidateQueries({ queryKey: ['driver-wallet', id] }); // aprovação pode dar crédito de boas-vindas
       queryClient.invalidateQueries({ queryKey: ['drivers'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setRejecting(false);
@@ -143,6 +145,8 @@ export default function DriverDetail() {
           {driver.avatarUrl ? <img src={driver.avatarUrl} alt="" className="max-h-64 rounded-lg" /> : <p className="text-sm text-gray-500">Sem foto.</p>}
         </Card>
       </div>
+
+      <DriverWallet driverId={driver.id} />
 
       <Card title="Documentos">
         <div className="grid gap-4 md:grid-cols-3">

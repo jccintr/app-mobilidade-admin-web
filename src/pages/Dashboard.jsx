@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
-import { money, RIDE_STATUS } from '../lib/format.js';
-import { Banknote, CarTaxiFront, Route, TriangleAlert, Users } from 'lucide-react';
+import { cents, money, RIDE_STATUS } from '../lib/format.js';
+import { Banknote, CarTaxiFront, Coins, Route, TriangleAlert, Users, Wallet } from 'lucide-react';
 import { Alert, Card, PageHeader, Spinner, Stat } from '../components/ui.jsx';
 
 export default function Dashboard() {
@@ -10,8 +10,9 @@ export default function Dashboard() {
   if (isLoading) return <Spinner />;
   if (error) return <Alert>{error.message}</Alert>;
 
-  const { drivers, ridesToday, passengers, rain } = data;
+  const { drivers, ridesToday, passengers, rain, billing } = data;
   const pending = drivers.pending_approval ?? 0;
+  const awaiting = billing?.purchasesAwaitingConfirmation ?? 0;
 
   return (
     <div className="space-y-6">
@@ -30,12 +31,37 @@ export default function Dashboard() {
         </Link>
       )}
 
+      {awaiting > 0 && (
+        <Link to="/creditos" className="block">
+          <Alert tone="amber">
+            <span className="flex items-center gap-2">
+              <Wallet size={16} />
+              <span>
+                <strong>{awaiting}</strong> {awaiting === 1 ? 'motorista informou' : 'motoristas informaram'} o pagamento de créditos. Clique para conferir o Pix e liberar.
+              </span>
+            </span>
+          </Alert>
+        </Link>
+      )}
+
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat icon={Route} label="Corridas hoje" value={ridesToday.total} hint={`${ridesToday.byStatus.completed ?? 0} concluídas`} />
         <Stat icon={Banknote} label="Movimentado hoje" value={money(ridesToday.revenue)} hint="Soma das corridas concluídas" />
         <Stat icon={CarTaxiFront} label="Motoristas online" value={drivers.online} hint={`${drivers.approved ?? 0} aprovados`} />
         <Stat icon={Users} label="Passageiros" value={passengers} />
       </div>
+
+      {billing && (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <Stat icon={Coins} label="Taxas da operadora hoje" value={cents(billing.feesTodayCents)} hint="Cobradas no aceite, menos as devolvidas" />
+          <Stat
+            icon={Wallet}
+            label="Créditos vendidos hoje"
+            value={cents(billing.creditsSoldTodayCents)}
+            hint={`${billing.creditPurchasesToday} ${billing.creditPurchasesToday === 1 ? 'compra confirmada' : 'compras confirmadas'}`}
+          />
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Corridas de hoje por situação">

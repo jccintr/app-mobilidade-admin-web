@@ -17,6 +17,7 @@ import {
   Users,
   Sun,
   Tag,
+  Wallet,
   X,
 } from 'lucide-react';
 import { api } from '../lib/api.js';
@@ -24,6 +25,7 @@ import { useAuth } from '../lib/auth.jsx';
 import { useTenant } from '../lib/tenant.jsx';
 import { useTheme } from '../lib/theme.jsx';
 import { Avatar, cx } from './ui.jsx';
+import { CreditAlerts, useCreditSummary } from './CreditAlerts.jsx';
 
 const NAV = [
   {
@@ -44,6 +46,7 @@ const NAV = [
   {
     group: 'Negócio',
     items: [
+      ['/creditos', 'Créditos', Wallet, 'credits'],
       ['/tarifa', 'Tarifa', Tag],
       ['/configuracoes', 'Configurações', Settings],
     ],
@@ -181,6 +184,8 @@ export default function Layout() {
     }
   });
   const { pathname } = useLocation();
+  const { data: creditSummary } = useCreditSummary();
+  const badges = { credits: creditSummary?.informed ?? 0 };
 
   useEffect(() => setMobileOpen(false), [pathname]);
   const toggleCollapsed = () => {
@@ -200,7 +205,7 @@ export default function Layout() {
         <div key={group}>
           {!isCollapsed && <p className="mb-1.5 px-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">{group}</p>}
           <ul className="space-y-0.5">
-            {items.map(([to, label, Icon]) => (
+            {items.map(([to, label, Icon, badgeKey]) => (
               <li key={to}>
                 <NavLink
                   to={to}
@@ -221,6 +226,17 @@ export default function Layout() {
                       {isActive && <span className="absolute -left-3 top-2 h-5 w-[3px] rounded-r bg-brand" aria-hidden />}
                       <Icon size={18} strokeWidth={1.8} className={isActive ? 'text-brand' : ''} />
                       {!isCollapsed && label}
+                      {badgeKey && badges[badgeKey] > 0 && (
+                        <span
+                          className={cx(
+                            'num flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-amber-500 px-1 text-[11px] font-semibold text-gray-950',
+                            isCollapsed ? 'absolute right-1.5 top-1' : 'ml-auto',
+                          )}
+                          aria-label={`${badges[badgeKey]} aguardando conferência`}
+                        >
+                          {badges[badgeKey]}
+                        </span>
+                      )}
                     </>
                   )}
                 </NavLink>
@@ -288,6 +304,7 @@ export default function Layout() {
         <main className="mx-auto w-full min-w-0 max-w-[1400px] flex-1 p-4 md:p-8">
           <Outlet />
         </main>
+        <CreditAlerts />
       </div>
     </div>
   );

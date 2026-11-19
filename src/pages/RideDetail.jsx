@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
-import { dateTime, money, PAYMENT, RIDE_STATUS, timeOnly, VEHICLE, vehicleText } from '../lib/format.js';
+import { cents, dateTime, FEE_STATUS, money, PAYMENT, RIDE_STATUS, timeOnly, VEHICLE, vehicleText } from '../lib/format.js';
 import { ArrowLeft } from 'lucide-react';
 import { Alert, Badge, Card, Spinner, StatusBadge, Table, Td } from '../components/ui.jsx';
 
@@ -91,6 +91,29 @@ export default function RideDetail() {
             ))}
         </ul>
       </Card>
+
+      {r.fee && r.fee.status !== 'none' && (
+        <Card title="Taxa da operadora">
+          <dl className="num grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[auto_1fr]">
+            <dt className="text-gray-500">Taxa</dt>
+            <dd className="flex flex-wrap items-center gap-2">
+              <strong>{cents(r.fee.totalCents)}</strong>
+              <StatusBadge map={FEE_STATUS} value={r.fee.status} />
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {[r.fee.fixedCents ? `${cents(r.fee.fixedCents)} fixo` : null, r.fee.percent ? `${String(r.fee.percent).replace('.', ',')}% de ${cents(r.fee.baseCents)}` : null].filter(Boolean).join(' + ')}
+              </span>
+            </dd>
+            <dt className="text-gray-500">Motorista recebe</dt>
+            <dd>{cents(r.driverNetCents)}{r.status !== 'completed' ? ' (se concluída)' : ''}</dd>
+            {r.fee.status === 'charged' && r.status === 'cancelled' && r.cancelledBy === 'driver' && (
+              <>
+                <dt className="text-gray-500">Observação</dt>
+                <dd>O motorista cancelou depois de aceitar: a taxa não foi devolvida.</dd>
+              </>
+            )}
+          </dl>
+        </Card>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <FareLines fare={r.estimate} title={`Estimativa (regra v${r.ruleVersion})`} />

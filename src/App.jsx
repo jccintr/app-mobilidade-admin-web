@@ -13,6 +13,7 @@ import RideDetail from './pages/RideDetail.jsx';
 import Tariff from './pages/Tariff.jsx';
 import Settings from './pages/Settings.jsx';
 import LiveMap from './pages/LiveMap.jsx';
+import Credits from './pages/Credits.jsx';
 
 export default function App() {
   const { user, ready } = useAuth();
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="passageiros" element={<Passengers />} />
         <Route path="corridas" element={<Rides />} />
         <Route path="corridas/:id" element={<RideDetail />} />
+        <Route path="creditos" element={<Credits />} />
         <Route path="tarifa" element={<Tariff />} />
         <Route path="configuracoes" element={<Settings />} />
         <Route path="*" element={<Navigate to="/" replace />} />

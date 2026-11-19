@@ -12,7 +12,7 @@ const TEMPLATE = {
     car: { baseFare: 4, perKm: 2.2, perMinute: 0.35, minimumFare: 8 },
   },
   adjustments: [],
-  extras: { waitPerMinute: 0.5, perStop: 2 },
+  extras: { waitPerMinute: 0, perStop: 2 }, // sem cobrança de espera
   limits: { maxPercentTotal: 60, minPercentTotal: -50 },
   rounding: { step: 0.5, mode: 'nearest' },
 };
@@ -176,7 +176,7 @@ function Adjustment({ item, onChange, onRemove }) {
 }
 
 function Simulator({ config }) {
-  const [input, setInput] = useState({ vehicleType: 'car', distanceKm: 5, durationMin: 15, rain: false, zones: '', waitMinutes: 0, stops: 0, tolls: 0, requestedAt: '' });
+  const [input, setInput] = useState({ vehicleType: 'car', distanceKm: 5, durationMin: 15, rain: false, zones: '', stops: 0, tolls: 0, requestedAt: '' });
   const set = (patch) => setInput((current) => ({ ...current, ...patch }));
   const mutation = useMutation({
     mutationFn: () => {
@@ -186,7 +186,6 @@ function Simulator({ config }) {
         durationMin: input.durationMin,
         rain: input.rain,
         zones: input.zones.split(',').map((s) => s.trim()).filter(Boolean),
-        waitMinutes: input.waitMinutes,
         stops: Math.round(input.stops),
         tolls: input.tolls,
       };
@@ -212,7 +211,6 @@ function Simulator({ config }) {
         </Field>
         <Field label="Distância (km)"><Num value={input.distanceKm} onChange={(n) => set({ distanceKm: n })} /></Field>
         <Field label="Duração (min)"><Num value={input.durationMin} onChange={(n) => set({ durationMin: n })} /></Field>
-        <Field label="Espera (min)"><Num value={input.waitMinutes} onChange={(n) => set({ waitMinutes: n })} /></Field>
         <Field label="Paradas"><Num value={input.stops} onChange={(n) => set({ stops: n })} /></Field>
         <Field label="Pedágio (R$)"><Num value={input.tolls} onChange={(n) => set({ tolls: n })} /></Field>
         <Field label="Zonas"><Input value={input.zones} onChange={(e) => set({ zones: e.target.value })} placeholder="rodoviaria" /></Field>
@@ -271,8 +269,10 @@ export default function Tariff() {
     setLoadedFrom(base ? base.version : null);
   }, [data]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Sem nome digitado, a versão ganha um nome automático com a data e a hora (antes o botão ficava desabilitado).
+  const autoName = () => `Alteração de ${new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
   const save = useMutation({
-    mutationFn: () => api.post('/admin/pricing-rules', { name: name.trim(), notes: notes.trim() || undefined, activate, config: clean(config) }),
+    mutationFn: () => api.post('/admin/pricing-rules', { name: name.trim() || autoName(), notes: notes.trim() || undefined, activate, config: clean(config) }),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['rules'] });
       setMessage({ tone: 'green', text: `Versão ${result.rule.version} salva${result.rule.active ? ' e ativada' : ''}.` });
@@ -339,7 +339,6 @@ export default function Tariff() {
 
           <Card title="Extras, limites e arredondamento">
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-              <Field label="Espera por minuto (R$)"><Num value={config.extras.waitPerMinute} onChange={(n) => update({ extras: { ...config.extras, waitPerMinute: n } })} /></Field>
               <Field label="Por parada (R$)"><Num value={config.extras.perStop} onChange={(n) => update({ extras: { ...config.extras, perStop: n } })} /></Field>
               <Field label="Fuso horário"><Input value={config.timezone} onChange={(e) => update({ timezone: e.target.value })} /></Field>
               <Field label="Soma máxima dos % (acréscimo)"><Num value={config.limits.maxPercentTotal} onChange={(n) => update({ limits: { ...config.limits, maxPercentTotal: n } })} /></Field>
@@ -408,7 +407,9 @@ export default function Tariff() {
               </div>
             )}
             <div className="grid gap-3 md:grid-cols-2">
-              <Field label="Nome da versão"><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Tarifa de outubro" /></Field>
+              <Field label="Nome da versão" hint="Opcional. Vazio = data e hora da alteração.">
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Tarifa de outubro" maxLength={80} />
+              </Field>
               <Field label="Observação (opcional)"><Input value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
             </div>
             <label className="mt-3 flex items-center gap-2 text-sm">
@@ -417,7 +418,7 @@ export default function Tariff() {
             </label>
             <Button
               className="mt-3"
-              disabled={save.isPending || name.trim().length < 2}
+              disabled={save.isPending || name.trim().length === 1}
               onClick={() => {
                 setMessage({ tone: 'red', text: '' });
                 save.mutate();
@@ -425,6 +426,8 @@ export default function Tariff() {
             >
               {save.isPending ? 'Salvando...' : 'Salvar versão'}
             </Button>
+            {/* O resultado aparece também aqui, perto do botão (o aviso do topo fica fora da tela). */}
+            {message.text && <div className="mt-3"><Alert tone={message.tone}>{message.text}</Alert></div>}
           </Card>
         </div>
 

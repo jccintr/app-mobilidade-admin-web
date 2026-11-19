@@ -33,3 +33,41 @@ export const PAYMENT = { cash: 'Dinheiro', pix_direct: 'Pix direto ao motorista'
 export const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 export const vehicleText = (v) => (v ? [v.brand, v.model, v.color, v.plate].filter(Boolean).join(' · ') : '—');
+
+// ---- dinheiro em centavos (a API de créditos trabalha em centavos) ----
+export const cents = (value) => money((value ?? 0) / 100);
+
+/** "1,50" | "1.50" | "R$ 1,50" -> 150 (centavos). Vazio ou inválido -> null. */
+export function parseMoney(text) {
+  const clean = String(text ?? '').replace(/[R$\s]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
+  if (clean === '') return null;
+  const value = Number(clean);
+  return Number.isFinite(value) && value >= 0 ? Math.round(value * 100) : null;
+}
+
+/** 150 -> "1,50" (para preencher campos de texto). */
+export const moneyInput = (valueCents) => ((valueCents ?? 0) / 100).toFixed(2).replace('.', ',');
+
+export const PURCHASE_STATUS = {
+  pending: { label: 'Aguardando pagamento', tone: 'gray' },
+  informed: { label: 'Pagamento informado', tone: 'amber' },
+  confirmed: { label: 'Confirmada', tone: 'green' },
+  rejected: { label: 'Recusada', tone: 'red' },
+  cancelled: { label: 'Cancelada', tone: 'gray' },
+  expired: { label: 'Vencida', tone: 'gray' },
+};
+
+export const WALLET_TYPE = {
+  purchase: 'Compra de créditos',
+  welcome: 'Boas-vindas',
+  ride_fee: 'Taxa da corrida',
+  ride_refund: 'Taxa devolvida (passageiro cancelou)',
+  adjustment: 'Ajuste manual',
+};
+
+export const FEE_STATUS = {
+  none: { label: 'Sem taxa', tone: 'gray' },
+  pending: { label: 'A cobrar no aceite', tone: 'gray' },
+  charged: { label: 'Cobrada', tone: 'green' },
+  refunded: { label: 'Devolvida', tone: 'blue' },
+};
